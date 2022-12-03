@@ -1,0 +1,133 @@
+#PRACTICA DE 29/11/2022
+data(iris) #instalar la libreria Tidyverse
+iris %>%  
+  head(10) 
+#> Sepal.Length Sepal.Width Petal.Length Petal.Width Species 
+
+? set.seed() #leer documentacion funcion Random Number Generation
+
+# 28 es el día de cumpleaños del autor 
+set.seed(28) 
+index_muestra <- sample(150, 100) 
+index_entrena <- sample(index_muestra, 50) 
+index_test <- index_muestra[!index_muestra %in% index_entrena] 
+
+index_muestra
+index_entrena
+index_test
+
+#Ahora que tenemos los índices podemos construir nuestros datos de 
+# entrenamiento y nuestra prueba.
+iris_entrena <- iris[index_entrena, ] 
+iris_test <- iris[index_test, ] 
+iris_entrena_input <- iris_entrena[, -5] 
+iris_entrena_output <- iris_entrena[, 5] 
+#Ahora que tenemos los índices podemos construir nuestros datos de iris_entrena
+#entrenamiento y nuestra prueba.bien podemos construir los algoritmos para calcular 
+#las distancias mínimas para  cada punto, 
+#Para ello, cargaremos la librería class, la cual nos permitirá ejecutar  kNN rápidamente. 
+ 
+
+
+iris_entrena<- iris[index_entrena, ] 
+iris_test <- iris[index_test, ] 
+iris_entrena_input <- iris_entrena[, -5] 
+iris_entrena_output <- iris_entrena[, 5] 
+iris_test_input <- iris_test[, -5] 
+iris_test_output <- iris_test[, 5]
+
+#cargaremos la librería class, la cual nos permitirá ejecutar  kNN rápidamente. 
+install.packages("class") 
+library(class) 
+
+#Esta librería nos proporciona la función knn(), 
+#la cual tomará los datos de  entrenamiento para crear el modelo y 
+#una vez creado el modelo tomará los datos  de prueba para predecir 
+#la salida para nuestros datos de prueba. 
+
+iris_test_output_kNN <- knn(train = iris_entrena_input,  
+                            cl = iris_entrena_output,  
+                            test = iris_test_input,  
+                            k = 3) 
+iris_test_output_kNN 
+
+#Así, la función knn nos arroja la predicción solo con ingresarle como atributos 
+#los  datos de entrenamiento, las entradas del test y cuántos vecinos cercanos  buscará (k). 
+#Y no solo eso, podemos comparar nuestra predicción con  los resultados del test 
+#para ver qué tan exacto es nuestro modelo.
+#Para ello calculamos el porcentaje de aciertos de la predicción con respecto a  
+#la salida de la prueba. 
+
+mean(iris_test_output_kNN == iris_test_output) 
+
+#Además, podemos colocar un resumen en una tabla, también conocida  como matriz de confusión, 
+#para ver cuántos pronósticos fueron iguales a los  valores reales utilizando la función table(). 
+
+table(iris_test_output_kNN, iris_test_output) 
+
+#Interpretamos celda a celda este resultado: 
+#1. Nuestro modelo kNN predijo 14 valores como especie “setosa” y resulta  
+#que en nuestro test el valor real, output era también setosa. 
+#2. Nuestro modelo predijo 20 como especie versicolor. Sin embargo, 
+#en la  data real-test, de esos 20, solo 18 son versicolor y 2 son virginica. 
+#3. Nuestro modelo predijo 16 como especie virginica. Sin embargo, 
+#en la data  real-test, de esos 16, solo 15 son virginica. 
+
+#Diversos valores de k 
+#Hasta el momento solo hemos utilizado un solo valor para k, 3 vecinos más  cercanos. 
+#Sin embargo, podemos ver la exactitud para diferentes valores de  k. 
+#Como tenemos 50 valores en nuestros datos de entrenamiento veremos los  
+#aciertos tomando máximo 50 vecinos más cercanos. 
+
+k <- 1:50 
+resultado <- data.frame(k, precision = 0) 
+for(n in k){ 
+  iris_test_output_kNN <- knn(train = iris_entrena_input,  
+                              cl = iris_entrena_output,  
+                              test = iris_test_input,  
+                              k = n) 
+    
+  resultado$precision[n] <- mean(iris_test_output_kNN == iris_test_output) }
+resultado %>%  
+  ggplot() + 
+  aes(k, precision) + 
+  geom_line() 
+#Como vemos, para este caso, a partir de cierto número de vecinos más cercanos  
+#el nivel de aciertos de nuestro algoritmo empieza a reducirse. 
+#Dependerá de  cada caso el elegir el mejor “k” para nuestro modelo. 
+#Ya hemos construido así nuestro primer modelo de aprendizaje automático. 
+
+################
+#Paquete caret (ver notas)
+
+install.packages('caret', dependencies = TRUE) 
+library(caret)
+
+#con k vecinos más cercanos, pero esta vez utilizando las funciones de la librería  Caret. 
+#La data de este ejemplo la ob tendremos de la librería ISLR, 
+#la cual  contiene los porcentajes diarios de rendimiento para el índice bursátil 
+#S&P 500  entre el 2001 y 2005. Este data frame tiene 8 columnas que usaremos  de entrada y 
+#la última columna que tiene dos clases ( si sube o baja el índice)  que usaremos como salida 
+
+install.packages("ISLR") 
+library(ISLR) 
+data(Smarket) 
+
+Smarket %>%  head(10) 
+
+# Hacemos unas traducciones para facilitad del análisis 
+Smarket <- Smarket %>%  
+  rename(Direccion = Direction) %>%  
+  mutate(Direccion = ifelse(Direccion == "Up", "Sube", "Baja")) %>%   mutate_at(c("Direccion"), ~as.factor(.)) 
+Smarket
+
+createData
+#Creación de datos de entrenamiento y prueba (REVISAR NOTAS)
+
+# El resultado de esta función es una serie de índices aleatorios, 
+#los cuales  usaremos para construir nuestros datos de entrenamiento y prueba. 
+
+set.seed(28) 
+indxEntrena <- createDataPartition(y = Smarket$Direccion, p = 0.75, list =  FALSE) 
+SP_entrena <- Smarket[indxEntrena,] 
+SP_test <- Smarket[-indxEntrena,]
